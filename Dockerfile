@@ -1,6 +1,6 @@
 FROM ubuntu:14.04
 
-RUN apt-get update
+RUN apt-get -y update
 
 # Install basic software
 RUN apt-get -y install wget
@@ -8,12 +8,12 @@ RUN apt-get -y install wget
 
 # Note: libgeos++-dev is included here too (the nominatim install page suggests installing it if there is a problem with the 'pear install DB' below - it seems safe to install it anyway)
 RUN apt-get -y install build-essential
-RUN apt-get -y install gcc git osmosis
-RUN apt-get -y install libxml2-dev libgeos-dev libpq-dev libbz2-dev libtool automake libproj-dev
-RUN apt-get -y install proj-bin libgeos-c1 libgeos++-dev
-
+RUN apt-get -y install gcc osmosis
+RUN apt-get -y install libxml2-dev libgeos-dev libpq-dev libbz2-dev libtool automake  libproj-dev
+RUN apt-get -y install proj-bin libgeos-c1 libgeos++-dev libgeos-c1
+RUN apt-get -y install git autoconf-archive
 # Install Boost (required by osm2pqsql)
-RUN apt-get -y install autoconf make g++ libboost-dev \
+RUN apt-get -y install autoconf autoconf-archive make g++ libboost-dev \
   libboost-system-dev libboost-filesystem-dev libboost-thread-dev
 
 # Install PHP5
@@ -44,14 +44,16 @@ RUN apt-get install -y sudo
 RUN pear install DB
 RUN useradd -m -p password1234 nominatim
 RUN mkdir -p /app/nominatim
-RUN git clone --recursive https://github.com/twain47/Nominatim.git /app/nominatim
 RUN cd /app/nominatim
 WORKDIR /app/nominatim
+RUN wget https://github.com/twain47/Nominatim/archive/v2.4.0.tar.gz
+RUN tar --strip-components=1 -zxvf v2.4.0.tar.gz
+RUN rm  v2.4.0.tar.gz
+RUN echo "test"
 RUN ./autogen.sh
 RUN ./configure
 RUN make
-
-# Configure postgresql
+## Configure postgresql
 RUN service postgresql start && \
   pg_dropcluster --stop 9.3 main
 RUN service postgresql start && \

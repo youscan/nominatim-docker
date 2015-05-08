@@ -1,6 +1,8 @@
 # Nominatim Docker
 
-Run [http://wiki.openstreetmap.org/wiki/Nominatim](http://wiki.openstreetmap.org/wiki/Nominatim) in a docker container. Clones the current master and builds it. This is always the latest version, be cautious as it may be unstable.
+Run [http://wiki.openstreetmap.org/wiki/Nominatim](http://wiki.openstreetmap.org/wiki/Nominatim) in a docker container.
+
+This version uses Nominatim the Nominatim 2.4 Release.
 
 Uses Ubuntu 14.04 and PostgreSQL 9.3
 
