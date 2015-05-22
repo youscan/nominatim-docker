@@ -5,7 +5,6 @@ RUN apt-get -y update
 # Install basic software
 RUN apt-get -y install wget
 
-
 # Note: libgeos++-dev is included here too (the nominatim install page suggests installing it if there is a problem with the 'pear install DB' below - it seems safe to install it anyway)
 RUN apt-get -y install build-essential
 RUN apt-get -y install gcc osmosis
@@ -46,11 +45,9 @@ RUN useradd -m -p password1234 nominatim
 RUN mkdir -p /app/nominatim
 RUN cd /app/nominatim
 WORKDIR /app/nominatim
-RUN wget https://github.com/twain47/Nominatim/archive/v2.4.0.tar.gz
-RUN tar --strip-components=1 -zxvf v2.4.0.tar.gz
-RUN rm  v2.4.0.tar.gz
-RUN echo "test"
-RUN ./autogen.sh
+RUN wget http://www.nominatim.org/release/Nominatim-2.4.0.tar.bz2
+RUN tar --strip-components=1 -xvf Nominatim-2.4.0.tar.bz2
+RUN rm  Nominatim-2.4.0.tar.bz2
 RUN ./configure
 RUN make
 ## Configure postgresql
