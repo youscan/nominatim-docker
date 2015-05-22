@@ -1,4 +1,5 @@
 FROM ubuntu:14.04
+MAINTAINER Jan Nonnen <helvalius@gmail.com>
 
 RUN apt-get -y update
 
