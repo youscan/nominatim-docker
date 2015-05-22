@@ -1,5 +1,4 @@
 FROM ubuntu:14.04
-MAINTAINER jan.nonnen@gmail.com
 
 RUN apt-get -y update
 
@@ -60,8 +59,7 @@ RUN service postgresql start && \
 RUN service postgresql start && \
   sudo -u postgres psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='nominatim'" | grep -q 1 || sudo -u postgres createuser -s nominatim && \
   sudo -u postgres psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='www-data'" | grep -q 1 || sudo -u postgres createuser -SDR www-data && \
-  sudo -u postgres psql postgres -c "DROP DATABASE IF EXISTS nominatim" && \
-  sudo -u postgres psql -c "CREATE USER docker WITH SUPERUSER PASSWORD 'docker';"
+  sudo -u postgres psql postgres -c "DROP DATABASE IF EXISTS nominatim"
 
 RUN wget --output-document=/app/data.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
 # RUN wget --output-document=/app/data.pbf http://download.geofabrik.de/europe/luxembourg-latest.osm.pbf
