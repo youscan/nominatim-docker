@@ -1,7 +1,7 @@
 FROM ubuntu:14.04
 MAINTAINER Jan Nonnen <helvalius@gmail.com>
 # Define the OSM argument, use monaco as default
-ARG OSM=http://download.geofabrik.de/europe/monaco-latest.osm.pbf
+ARG OSM
 
 RUN apt-get update
 
@@ -16,7 +16,7 @@ RUN apt-get -y install build-essential gcc git osmosis  libxml2-dev libgeos-dev 
 RUN apt-get -y install autoconf make g++ libboost-dev libboost-system-dev libboost-filesystem-dev libboost-thread-dev lua5.2 liblua5.2-dev
 
 # Install PHP5
-RUN apt-get -y install php5 php-pear php5-pgsql php5-json php-db
+RUN apt-get -y install php5 php-pear php5-pgsql php5-json php-db php5-intl
 
 # From the website "If you plan to install the source from github, the following additional packages are needed:"
 # RUN apt-get -y install git autoconf-archive
@@ -38,8 +38,6 @@ RUN apt-get -y install apache2
 RUN apt-get -y install libprotobuf-c0-dev protobuf-c-compiler
 
 RUN apt-get  -y install sudo
-
-#
 
 RUN pear install DB
 RUN useradd -m -p password1234 nominatim
@@ -64,10 +62,10 @@ RUN sudo -u postgres /usr/lib/postgresql/9.3/bin/pg_ctl start -w -D /etc/postgre
   sudo -u postgres psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='www-data'" | grep -q 1 || sudo -u postgres createuser -SDR www-data && \
   sudo -u postgres psql postgres -c "DROP DATABASE IF EXISTS nominatim"
 
-RUN wget --output-document=/app/data.pbf $OSM
-# RUN wget --output-document=/app/data.pbf http://download.geofabrik.de/europe/luxembourg-latest.osm.pbf
-# RUN wget --output-document=/app/data.pbf http://download.geofabrik.de/north-america-latest.osm.pbf
-# RUN wget --output-document=/app/data.pbf http://download.geofabrik.de/north-america/us/delaware-latest.osm.pbf
+RUN wget --timestamping --output-document=/app/git/data/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz
+
+RUN echo "Using osm file: $OSM"
+ADD $OSM /app/data.pbf
 
 WORKDIR /app/nominatim
 
@@ -111,7 +109,5 @@ WORKDIR /app/nominatim
 RUN chmod +x ./configPostgresql.sh
 ADD start.sh /app/nominatim/start.sh
 RUN chmod +x /app/nominatim/start.sh
-
-RUN echo "Using OSM URL: "$OSM
 
 CMD /app/nominatim/start.sh

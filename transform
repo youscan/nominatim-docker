@@ -1,0 +1,46 @@
+#!/bin/bash
+
+if [ -z $1 ]; then
+    echo "Usage: "
+    echo "  transform <filename>.osm.pbf"
+    exit 1
+fi
+
+FILE=$1
+if [ ! -e $FILE ]; then
+    echo "File $FILE does not exists"
+    exit 1
+fi
+
+FILENAME=${FILE%%.*}
+
+CITIES="$FILENAME-citiies.osm.pbf"
+RELATIONS="$FILENAME-relations.osm.pbf"
+
+SMALL="$FILENAME-small.osm.pbf"
+
+echo
+echo "Extracting cities..."
+
+osmosis --read-pbf $FILE \
+--tf accept-relations "place=country,state,county,city,region,island,town,village,municipality" \
+--used-way \
+--used-node \
+--write-pbf $CITIES
+
+echo
+echo "Extracting administrative regions.."
+
+osmosis --read-pbf $FILE \
+--tf accept-relations "admin_level=1,2,3,4,5,6,7,8" \
+--used-way \
+--used-node \
+--write-pbf $RELATIONS
+
+echo
+echo "Merging cities and regions..."
+
+osmosis --read-pbf $CITIES --read-pbf $RELATIONS --merge --write-pbf $SMALL
+
+rm $CITIES
+rm $RELATIONS
