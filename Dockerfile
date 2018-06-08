@@ -1,5 +1,5 @@
 FROM ubuntu:14.04
-MAINTAINER Jan Nonnen <helvalius@gmail.com>
+
 # Define the OSM argument, use monaco as default
 ARG OSM
 
