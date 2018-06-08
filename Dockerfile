@@ -42,7 +42,7 @@ RUN apt-get  -y install sudo
 RUN pear install DB
 RUN useradd -m -p password1234 nominatim
 RUN mkdir -p /app/git/
-RUN git clone --recursive https://github.com/twain47/Nominatim.git /app/git/
+RUN git clone --recursive https://github.com/youscan/Nominatim.git /app/git/
 RUN mkdir -p /app/nominatim
 
 WORKDIR /app/nominatim
