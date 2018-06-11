@@ -14,22 +14,23 @@ fi
 
 FILENAME=${FILE%%.*}
 
-CITIES="$FILENAME-citiies.osm.pbf"
+CITIES="$FILENAME-cities.osm.pbf"
 RELATIONS="$FILENAME-relations.osm.pbf"
-
+NODES="$FILENAME-nodes.osm.pbf"
+WAYS="$FILENAME-ways.osm.pbf"
 SMALL="$FILENAME-small.osm.pbf"
 
 echo
-echo "Extracting cities..."
+echo "Extracting cities regions..."
 
 osmosis --read-pbf $FILE \
---tf accept-relations "place=country,state,county,city,region,island,town,village,municipality" \
+--tf accept-relations "place=continent,country,state,county,city,region,province,district,island,town,village,municipality" \
 --used-way \
 --used-node \
 --write-pbf $CITIES
 
 echo
-echo "Extracting administrative regions.."
+echo "Extracting administrative regions..."
 
 osmosis --read-pbf $FILE \
 --tf accept-relations "admin_level=1,2,3,4,5,6,7,8" \
@@ -37,10 +38,47 @@ osmosis --read-pbf $FILE \
 --used-node \
 --write-pbf $RELATIONS
 
+
 echo
-echo "Merging cities and regions..."
+echo "Extracting missing city nodes"
 
-osmosis --read-pbf $CITIES --read-pbf $RELATIONS --merge --write-pbf $SMALL
+osmosis --read-pbf $FILE \
+--tf reject-relations \
+--tf reject-ways \
+--tf accept-nodes "place=continent,country,state,county,city,region,province,district,island,town,village,municipality" \
+--write-pbf $NODES \
 
-rm $CITIES
-rm $RELATIONS
+echo
+echo "Extracting missing ways"
+osmosis --read-pbf $FILE \
+--tf reject-relations \
+--tf accept-ways "place=continent,country,state,county,city,region,island,town,village,municipality" \
+--used-node \
+--write-pbf $WAYS
+
+T1="t1.pbf"
+T2="t2.pbf"
+
+echo
+echo "Merging cities and relations..."
+
+osmosis --read-pbf $CITIES --read-pbf $RELATIONS --merge --write-pbf $T1
+
+echo
+echo "Merging nodes and relations..."
+
+osmosis --read-pbf $NODES --read-pbf $T1 --merge --write-pbf $T2
+
+echo
+echo "Merging with ways"
+
+osmosis --read-pbf $T2 --read-pbf $WAYS --merge --write-pbf $SMALL
+
+echo 
+echo "Removing temporary merge file. Keeping intermediate files."
+
+rm $T1
+rm $T2
+
+# rm $NODES
+# rm $RELATIONS

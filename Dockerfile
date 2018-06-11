@@ -64,6 +64,10 @@ RUN sudo -u postgres /usr/lib/postgresql/9.3/bin/pg_ctl start -w -D /etc/postgre
 
 RUN wget --timestamping --output-document=/app/git/data/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz
 
+RUN wget --timestamping --output-document=/app/git/data/wikipedia_article.sql.bin https://www.nominatim.org/data/wikipedia_article.sql.bin
+
+RUN wget --timestamping --output-document=/app/git/data/wikipedia_redirect.sql.bin https://www.nominatim.org/data/wikipedia_redirect.sql.bin
+
 RUN echo "Using osm file: $OSM"
 ADD $OSM /app/data.pbf
 
