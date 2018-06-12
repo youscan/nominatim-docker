@@ -45,7 +45,7 @@ echo "Extracting missing city nodes"
 osmosis --read-pbf $FILE \
 --tf reject-relations \
 --tf reject-ways \
---tf accept-nodes "place=continent,country,state,county,city,region,province,district,island,town,village,municipality" \
+--tf accept-nodes "place=continent,country,state,suburb,county,city,region,province,district,island,town,village,municipality,hamlet" \
 --write-pbf $NODES \
 
 echo
