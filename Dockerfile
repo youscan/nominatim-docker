@@ -1,13 +1,10 @@
 FROM ubuntu:14.04
 
 # Define the OSM argument, use monaco as default
-ARG OSM
+ARG DBHOST=localhost
+ARG DBPORT=5432
 
 RUN apt-get update
-
-# Install basic software
-RUN apt-get -y install wget
-
 
 # Note: libgeos++-dev is included here too (the nominatim install page suggests installing it if there is a problem with the 'pear install DB' below - it seems safe to install it anyway)
 RUN apt-get -y install build-essential gcc git osmosis  libxml2-dev libgeos-dev libpq-dev libbz2-dev libtool cmake libproj-dev proj-bin libgeos-c1 libgeos++-dev libexpat1-dev
@@ -24,20 +21,11 @@ RUN apt-get -y install php5 php-pear php5-pgsql php5-json php-db php5-intl
 # Install Postgres, PostGIS and dependencies
 RUN apt-get -y install postgresql postgis postgresql-contrib postgresql-9.3-postgis-2.1 postgresql-server-dev-9.3
 
-# Work around for AUFS bug as per https://github.com/docker/docker/issues/783#issuecomment-56013588
-RUN mkdir /etc/ssl/private-copy; mv /etc/ssl/private/* /etc/ssl/private-copy/; rm -r /etc/ssl/private; mv /etc/ssl/private-copy /etc/ssl/private; chmod -R 0700 /etc/ssl/private; chown -R postgres /etc/ssl/private
-
-# Some additional packages that may not already be installed
-# bc is needed in configPostgresql.sh
-RUN apt-get -y install bc
 
 # Install Apache
 RUN apt-get -y install apache2
 
-# Add Protobuf support
-RUN apt-get -y install libprotobuf-c0-dev protobuf-c-compiler
-
-RUN apt-get  -y install sudo
+RUN apt-get  -y install sudo git
 
 RUN pear install DB
 RUN useradd -m -p password1234 nominatim
@@ -50,53 +38,21 @@ WORKDIR /app/nominatim
 RUN cmake /app/git/
 RUN make
 
-# Configure postgresql
-RUN service postgresql start && \
-  pg_dropcluster --stop 9.3 main
-RUN service postgresql start && \
-  pg_createcluster --start -e UTF-8 9.3 main
+ADD local.php /app/nominatim/settings/local.php
 
-RUN sudo -u postgres /usr/lib/postgresql/9.3/bin/pg_ctl start -w -D /etc/postgresql/9.3/main/ && \
-  cat /var/log/postgresql/postgresql-9.3-main.log && \
-  sudo -u postgres psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='nominatim'" | grep -q 1 || sudo -u postgres createuser -s nominatim && \
-  sudo -u postgres psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='www-data'" | grep -q 1 || sudo -u postgres createuser -SDR www-data && \
-  sudo -u postgres psql postgres -c "DROP DATABASE IF EXISTS nominatim"
+WORKDIR /app/nominatim/settings
 
-RUN wget --timestamping --output-document=/app/git/data/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz
+RUN sed -i.bak "s/pgsql:\/\/\@\/nominatim/pgsql:\/\/nominatim\@$DBHOST:$DBPORT\/nominatim/g" local.php
 
-RUN wget --timestamping --output-document=/app/git/data/wikipedia_article.sql.bin https://www.nominatim.org/data/wikipedia_article.sql.bin
-
-RUN wget --timestamping --output-document=/app/git/data/wikipedia_redirect.sql.bin https://www.nominatim.org/data/wikipedia_redirect.sql.bin
-
-RUN echo "Using osm file: $OSM"
-ADD $OSM /app/data.pbf
+RUN cat local.php
 
 WORKDIR /app/nominatim
 
-ADD local.php /app/nominatim/settings/local.php
-
-
-RUN ./utils/setup.php --help
-
 RUN chown -R nominatim:nominatim /app/nominatim
-RUN sudo -u postgres /usr/lib/postgresql/9.3/bin/pg_ctl start -w -D /etc/postgresql/9.3/main/ && \
-  sudo -u nominatim ./utils/setup.php --osm-file /app/data.pbf --all --threads 2
-
 RUN mkdir -p /var/www/nominatim
 RUN cp -R /app/nominatim/website /var/www/nominatim/
 RUN cp -R /app/nominatim/settings /var/www/nominatim/
 RUN chown -R nominatim:www-data /var/www/nominatim
-
-
-# Adjust PostgreSQL configuration so that remote connections to the
-# database are possible.
-RUN echo "host all  all    0.0.0.0/0  trust" >> /etc/postgresql/9.3/main/pg_hba.conf
-
-# And add ``listen_addresses`` to ``/etc/postgresql/9.3/main/postgresql.conf``
-RUN echo "listen_addresses='*'" >> /etc/postgresql/9.3/main/postgresql.conf
-
-# Expose the PostgreSQL port
-EXPOSE 5432
 
 RUN apt-get install -y curl
 ADD 400-nominatim.conf /etc/apache2/sites-available/400-nominatim.conf
@@ -107,10 +63,7 @@ RUN service apache2 start && \
 # Expose the HTTP port
 EXPOSE 8080
 
-
-ADD configPostgresql.sh /app/nominatim/configPostgresql.sh
 WORKDIR /app/nominatim
-RUN chmod +x ./configPostgresql.sh
 ADD start.sh /app/nominatim/start.sh
 RUN chmod +x /app/nominatim/start.sh
 
