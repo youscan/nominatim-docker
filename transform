@@ -80,5 +80,6 @@ echo "Removing temporary merge file. Keeping intermediate files."
 rm $T1
 rm $T2
 
+echo "Successfully converted map to the file: $SMALL"
 # rm $NODES
 # rm $RELATIONS
